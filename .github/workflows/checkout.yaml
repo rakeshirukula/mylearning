@@ -1,10 +1,39 @@
-name : checking out code
-on : [push]
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+
 jobs:
-    checkoutcode:
-        runs-on: ubuntu-latest
-        steps:
-            - name : checkout repo
-              uses: actions/checkout@v4
-              with:
-                repository: rakeshirukula/ThreeTier.git
+  deploy:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        environment: [production, staging, development]
+
+    environment: ${{ matrix.environment }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build project
+        run: npm run build
+
+      - name: Deploy to ${{ matrix.environment }}
+        env:
+          API_KEY: ${{ secrets[format('{0}_API_KEY', matrix.environment | upper)] }}
+        run: |
+          echo "Deploying to ${{ matrix.environment }} environment"
+          # Add your deployment commands here
+          # Example: npm run deploy -- --env=${{ matrix.environment }}
